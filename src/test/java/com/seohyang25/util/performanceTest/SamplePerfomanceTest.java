@@ -12,6 +12,7 @@ public class SamplePerfomanceTest {
 		runTest(new SampleTestTarget1());
 
 		runTest(new SampleTestTarget2());
+		runTest(new SampleTestTarget2());
 
 	}
 

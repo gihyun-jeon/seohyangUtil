@@ -9,6 +9,7 @@ public class SamplePerfomanceTest {
 	@Test
 	public void test() throws InterruptedException {
 		runTest(new SampleTestTarget1());
+		runTest(new SampleTestTarget1());
 
 		runTest(new SampleTestTarget2());
 

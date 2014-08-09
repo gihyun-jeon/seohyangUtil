@@ -7,20 +7,17 @@ public class SamplePerfomanceTest {
 	private int workCountPerThread = 100;
 
 	@Test
-	public void stringBuliderTest() throws InterruptedException {
-		PerformanceTestManager manager = new PerformanceTestManager(threadCount, workCountPerThread, new SampleTestTarget1());
-		manager.start();
+	public void test() throws InterruptedException {
+		runTest(new SampleTestTarget1());
 
-		while (false == manager.completed()) {
-			Thread.sleep(10);
-		}
+		runTest(new SampleTestTarget2());
 
-		manager.report();
 	}
 
-	@Test
-	public void stringTest() throws InterruptedException {
-		PerformanceTestManager manager = new PerformanceTestManager(threadCount, workCountPerThread, new SampleTestTarget2());
+
+
+	private void runTest(PerformanceTestable target) throws InterruptedException {
+		PerformanceTestManager manager = new PerformanceTestManager(threadCount, workCountPerThread, target);
 		manager.start();
 
 		while (false == manager.completed()) {

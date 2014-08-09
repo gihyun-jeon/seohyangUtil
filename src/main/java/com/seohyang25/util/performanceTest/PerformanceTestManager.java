@@ -2,12 +2,15 @@ package com.seohyang25.util.performanceTest;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
+
+import com.google.common.base.Stopwatch;
 
 public class PerformanceTestManager {
 	private List<PerformanceTestRunner> threadList = new ArrayList<PerformanceTestRunner>();
-	private long startMsec;
 	private int jobCount;
 	private String targetName;
+	private final Stopwatch stopwatch = new Stopwatch();
 
 	public PerformanceTestManager(int taskCount, int workingCount, PerformanceTestable target) {
 		this.jobCount = workingCount;
@@ -30,7 +33,7 @@ public class PerformanceTestManager {
 			System.out.println("Concurrent count    = " + threadList.size());
 			System.out.println("Request per task    = " + jobCount);
 			System.out.println("Total request count = " + getRequestCount());
-			System.out.println("Total response time = " + getRunningTime() + " msec");
+			System.out.println("Total response time = " + stopwatch.elapsed(TimeUnit.MILLISECONDS) + " msec");
 			System.out.println("TPS                 = " + getTps());
 			System.out.println("");
 		}
@@ -39,22 +42,13 @@ public class PerformanceTestManager {
 			return threadList.size() * jobCount;
 		}
 
-		public float getTpms() {
-			return (float)(getRequestCount()) / getRunningTime();
-		}
-
 		public float getTps() {
-			return getTpms() * 1000;
+			return (float)(getRequestCount()) / stopwatch.elapsed(TimeUnit.MILLISECONDS) * 1000;
 		}
-	}
-
-	public long getRunningTime() {
-		return System.currentTimeMillis() - getStartMsec();
-
 	}
 
 	public void start() {
-		startMsec = System.currentTimeMillis();
+		stopwatch.start();
 		for (PerformanceTestRunner task : threadList) {
 			task.start();
 		}
@@ -64,16 +58,13 @@ public class PerformanceTestManager {
 		return threadList;
 	}
 
-	public long getStartMsec() {
-		return startMsec;
-	}
-
 	public boolean completed() {
 		for (PerformanceTestRunner testRunner : threadList) {
 			if (false == testRunner.isCompleted()) {
 				return false;
 			}
 		}
+		stopwatch.stop();
 		return true;
 	}
 

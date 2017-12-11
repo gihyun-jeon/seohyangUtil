@@ -4,12 +4,10 @@ import com.google.common.collect.Lists;
 import org.slf4j.Logger;
 
 import javax.net.SocketFactory;
-import javax.net.ssl.SNIHostName;
-import javax.net.ssl.SSLParameters;
-import javax.net.ssl.SSLSocket;
-import javax.net.ssl.SSLSocketFactory;
-import java.io.IOException;
+import javax.net.ssl.*;
+import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
 import java.time.ZoneId;
@@ -24,24 +22,29 @@ public class SslCertificateChecker {
     private static final ZoneId SYSTEM_ZONE_ID = ZoneId.systemDefault();
     private static final SocketFactory SOCKET_FACTORY = SSLSocketFactory.getDefault();
 
-
     void printDomainCertificateInfo(String domain, int port, int timeoutMsec) {
+        getCertificatesByStartTls(domain, port, timeoutMsec)
+                .ifPresent(certificateList -> printInfo(certificateList));
+
         getCertificatesBySSLSocket(domain, port, timeoutMsec)
-                .ifPresent(certificateList -> certificateList
-                        .forEach(certificate -> {
-                            if (!(certificate instanceof X509Certificate)) {
-                                log.warn("find not instanceof X509Certificate! certificate=" + certificate.toString());
-                                return;
-                            }
+                .ifPresent(certificateList -> printInfo(certificateList));
+    }
 
-                            X509Certificate x509Certificate = (X509Certificate) certificate;
-                            if (-1 != x509Certificate.getBasicConstraints()) { // subject of the certificate is a CA, pass.
-                                return;
-                            }
+    private void printInfo(List<Certificate> certificateList) {
+        certificateList
+                .forEach(certificate -> {
+                    if (!(certificate instanceof X509Certificate)) {
+                        log.warn("find not instanceof X509Certificate! certificate=" + certificate.toString());
+                        return;
+                    }
 
-                            System.out.println(x509Certificate);
-                        })
-                );
+                    X509Certificate x509Certificate = (X509Certificate) certificate;
+                    if (-1 != x509Certificate.getBasicConstraints()) { // subject of the certificate is a CA, pass.
+                        return;
+                    }
+
+                    System.out.println(x509Certificate);
+                });
     }
 
 
@@ -59,8 +62,61 @@ public class SslCertificateChecker {
             return Optional.of(Arrays.stream(socket.getSession().getPeerCertificates()).collect(Collectors.toList()));
 
         } catch (Exception e) {
+            log.warn("getCertificatesBySSLSocket fail! domain=" + domain + " port=" + port + " timeoutMsec=" + timeoutMsec);
             log.warn(e.getMessage(), e);
-            log.info("getCertificatesBySSLSocket fail! domain=" + domain + " port=" + port + " timeoutMsec=" + timeoutMsec);
+
+        } finally {
+            if (null != socket) {
+                try {
+                    socket.close();
+                } catch (IOException e) {
+                    log.warn(e.getMessage(), e);
+                }
+            }
+        }
+        return Optional.empty();
+    }
+
+    private static Optional<List<Certificate>> getCertificatesByStartTls(String domain, int port, int timeoutMsec) {
+        Socket socket = null;
+        try {
+            socket = new Socket(domain, port);
+            BufferedReader reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+            BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
+            String line;
+            writer.write("STARTTLS\r\n");
+            writer.flush();
+            while ((line = reader.readLine()) != null) {
+                if (!line.contains("Ready to start TLS")) {
+                    continue;
+                }
+
+                SSLContext sc = SSLContext.getInstance("TLS");
+                sc.init(null, new TrustManager[]{
+                        new X509TrustManager() {
+                            public java.security.cert.X509Certificate[] getAcceptedIssuers() {
+                                return null;
+                            }
+
+                            public void checkClientTrusted(
+                                    java.security.cert.X509Certificate[] certs, String authType) {
+                            }
+
+                            public void checkServerTrusted(
+                                    java.security.cert.X509Certificate[] certs, String authType) {
+                            }
+                        }
+                }, new java.security.SecureRandom());
+
+                SSLSocketFactory sslSocketFactory = sc.getSocketFactory();
+                SSLSocket sslSocket = (SSLSocket) sslSocketFactory.createSocket(socket, socket.getInetAddress().getHostAddress(), socket.getPort(), true);
+                sslSocket.startHandshake();
+                sslSocket.close();
+                return Optional.of(Arrays.stream(sslSocket.getSession().getPeerCertificates()).collect(Collectors.toList()));
+            }
+        } catch (Exception e) {
+            log.warn("getCertificatesBySSLSocket fail! domain=" + domain + " port=" + port + " timeoutMsec=" + timeoutMsec);
+            log.warn(e.getMessage(), e);
 
         } finally {
             if (null != socket) {

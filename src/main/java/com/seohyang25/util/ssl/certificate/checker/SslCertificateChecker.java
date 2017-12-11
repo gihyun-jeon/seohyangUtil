@@ -23,10 +23,8 @@ public class SslCertificateChecker {
     private static final SocketFactory SOCKET_FACTORY = SSLSocketFactory.getDefault();
 
     void printDomainCertificateInfo(String domain, int port, int timeoutMsec) {
-        getCertificatesByStartTls(domain, port, timeoutMsec)
-                .ifPresent(certificateList -> printInfo(certificateList));
-
         getCertificatesBySSLSocket(domain, port, timeoutMsec)
+                .ifPresent(certificateList -> printInfo(certificateList));getCertificatesBySSLSocket(domain, port, timeoutMsec)
                 .ifPresent(certificateList -> printInfo(certificateList));
     }
 

@@ -46,10 +46,16 @@
             <artifactId>slf4j-log4j12</artifactId>
             <version>1.7.10</version>
         </dependency>
+
+        <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.0</version>
+        </dependency>
         <dependency>
             <groupId>com.google.guava</groupId>
             <artifactId>guava</artifactId>
-            <version>14.0.1</version>
+            <version>18.0</version>
         </dependency>
     </dependencies>
 

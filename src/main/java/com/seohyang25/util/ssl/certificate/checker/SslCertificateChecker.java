@@ -1,11 +1,10 @@
 package com.seohyang25.util.ssl.certificate.checker;
 
-import com.google.common.collect.Lists;
-import org.slf4j.Logger;
-
-import javax.net.SocketFactory;
-import javax.net.ssl.*;
-import java.io.*;
+import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.OutputStreamWriter;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 import java.security.cert.Certificate;
@@ -15,6 +14,19 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
 import java.util.stream.Collectors;
+
+import javax.net.SocketFactory;
+import javax.net.ssl.SNIHostName;
+import javax.net.ssl.SSLContext;
+import javax.net.ssl.SSLParameters;
+import javax.net.ssl.SSLSocket;
+import javax.net.ssl.SSLSocketFactory;
+import javax.net.ssl.TrustManager;
+import javax.net.ssl.X509TrustManager;
+
+import org.slf4j.Logger;
+
+import com.google.common.collect.Lists;
 
 public class SslCertificateChecker {
     private static final Logger log = org.slf4j.LoggerFactory.getLogger(SslCertificateChecker.class);

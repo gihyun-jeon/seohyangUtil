@@ -10,7 +10,7 @@ public class PerformanceTestManager {
 	private List<PerformanceTestRunner> threadList = new ArrayList<PerformanceTestRunner>();
 	private int jobCount;
 	private String targetName;
-	private final Stopwatch stopwatch = new Stopwatch();
+	private final Stopwatch stopwatch = Stopwatch.createUnstarted();
 
 	public PerformanceTestManager(int taskCount, int workingCount, PerformanceTestable target) {
 		this.jobCount = workingCount;

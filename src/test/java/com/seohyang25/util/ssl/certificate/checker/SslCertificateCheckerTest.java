@@ -7,6 +7,8 @@ public class SslCertificateCheckerTest {
 
     @Test
     public void test_printDomainCertificateInfo() {
+
+        sut.printDomainCertificateInfo("google.com", 443, 1000);
         sut.printDomainCertificateInfo("google.com", 443, 1000);
     }
 
